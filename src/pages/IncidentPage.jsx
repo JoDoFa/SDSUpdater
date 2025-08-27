@@ -354,6 +354,8 @@ function IncidentPage() {
             <label>Strand</label>
             <input type="text" value={selectedStudent?.strand || ""} readOnly />
           </div>
+
+          {/* Sanction in its own grid cell (col 3) */}
           <div>
             <label>Sanction</label>
             <select
@@ -368,6 +370,11 @@ function IncidentPage() {
               <option value="">Exclusion</option>
               <option value="Community Service">Community Service</option>
             </select>
+          </div>
+
+          {/* Add button moved to the cell beside sanction (below Section) */}
+          <div>
+            <label style={{ visibility: "hidden" }}>Add</label>
             <button className="add-btn" onClick={handleAddViolation}>
               Add
             </button>

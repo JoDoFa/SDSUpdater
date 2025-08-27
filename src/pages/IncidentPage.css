@@ -51,19 +51,32 @@
 }
 
 .add-btn {
-  margin-top: 10px;
+  margin-top: 0;
   height: 38px;
   background-color: #5D3C16;
   color: white;
   border: none;
-  padding: 0;
+  padding: 6px 12px;
   cursor: pointer;
-  width: 100%;
+  width: auto;           /* don't stretch full width when placed beside select */
   font-size: 14px;
-  border-radius: 5px;
-  float: right;
+  border-radius: 5px 5px 5px 5px;
+  float: none;
+  align-self: center;    /* center vertically within the select row */
+  box-shadow: none;
 }
 
+
+/* optional small responsive tweak so the button drops under select on very narrow screens */
+@media (max-width: 640px) {
+  .form-grid div[style] > div {
+    flex-direction: column;
+  }
+  .add-btn {
+    width: 100%;
+    align-self: stretch;
+  }
+}
 
 .table-controls {
   display: flex;
@@ -273,5 +286,50 @@
   justify-content: flex-end;
   gap: 10px;
   margin-top: 10px;
+}
+
+/* Sanction select + Add button: same height, button square matching select height */
+.sanction-row {
+  display: flex;
+  gap: 0;
+  align-items: center;
+}
+
+/* select fills available width; rounded left corners only so it visually pairs with button */
+.sanction-select {
+  flex: 1;
+  height: 38px;
+  padding: 7px 10px;
+  box-sizing: border-box;
+  border: 1px solid #aaa;
+  border-radius: 6px 0 0 6px;
+  font-size: 14px;
+  background: white;
+}
+
+/* override/add-btn to be a square matching select height and rounded on the right */
+.add-btn {
+  width: 100px;              /* same as select height -> square */
+  height: 38px;
+  padding: 10px;
+  margin: 0;
+  border-radius: 0 6px 6px 0;
+  background-color: #5D3C16;
+  color: white;
+  border: 1px solid #5D3C16;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* small-screen: stack select above button and make both full width */
+@media (max-width: 640px) {
+  .sanction-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sanction-select, .add-btn {
+    width: 100%;
+    border-radius: 6px;
+  }
 }
 
