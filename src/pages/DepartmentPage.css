@@ -1,0 +1,237 @@
+UPDATED DEPARTMENT 
+/* Container */
+.department-container {
+  padding: 4rem;
+  background-color: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+}
+
+
+/* Header */
+.department-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+
+.department-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #000000;
+}
+
+
+/* Controls */
+.department-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+.search-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 200px;
+}
+
+
+/* Buttons */
+.btn {
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+
+.primary {
+  background-color: #5D3C16;
+  color: #fff;
+}
+
+
+.primary:hover {
+  background-color: #5a340c;
+}
+
+
+.secondary {
+  background-color: #d4b996;
+  color: #000;
+}
+
+
+.secondary:hover {
+  background-color: #c5a47e;
+}
+
+
+.download {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #ccc;
+}
+
+
+.download:hover {
+  background-color: #f0f0f0;
+}
+
+
+/* Table Container */
+.department-table-container {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+}
+
+
+/* Table */
+.department-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+
+.department-table th,
+.department-table td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+
+.department-table th {
+  background-color: #5D3C16;
+  color: white;
+  font-weight: 600;
+}
+
+
+.department-table td {
+  background-color: #fff;
+}
+
+
+/* Icons */
+.icon {
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+
+.edit-icon {
+  color: #5D3C16;
+}
+
+
+.edit-icon:hover {
+  color: #5D3C16;
+}
+
+
+.delete-icon {
+  color: #5D3C16;
+}
+
+
+.delete-icon:hover {
+  color: #5D3C16;
+}
+
+
+/* Download Template */
+.download-template {
+  margin-top: 1rem;
+  text-align: right;
+}
+
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+
+.modal-content {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+
+.modal-content label {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+  font-weight: 500;
+}
+
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+
+/* Modal buttons */
+.button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+
+.button-row button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+
+.button-row button:first-child {
+  background-color: #ccc;
+}
+
+
+.button-row button:last-child {
+  background-color: #5D3C16;
+  color: #fff;
+}
+
+
+.button-row button:last-child:hover {
+  background-color: #4a3012;
+}
