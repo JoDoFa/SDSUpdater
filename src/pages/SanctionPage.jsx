@@ -1,3 +1,4 @@
+// src/pages/SanctionPage.jsx
 import React, { useState, useRef, useEffect } from "react";
 import "./SanctionPage.css";
 import { FaEdit, FaTrash, FaUserCircle } from "react-icons/fa";
@@ -8,7 +9,6 @@ const initialSanctions = [
   { sanction: "Suspension", type: "Major", offense: "3rd", severity: "High" },
   { sanction: "Exclusion", type: "Major", offense: "3rd", severity: "High" },
   { sanction: "Expulsion", type: "Major", offense: "3rd", severity: "High" },
-
 ];
 
 export default function SanctionPage() {
@@ -124,9 +124,32 @@ export default function SanctionPage() {
     URL.revokeObjectURL(url);
   };
 
-  // ---- BULK UPLOAD (Simulation) ----
-  const handleBulkUpload = () => {
-    alert("Bulk Upload feature not yet implemented.");
+  // ---- BULK UPLOAD ----
+  const handleBulkUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const rows = text.split("\n").map((row) => row.trim()).filter(Boolean);
+
+      // Expecting format: Sanction,Category,Offense Level,Severity
+      const newSanctions = rows.slice(1).map((row) => {
+        const [sanction, type, offense, severity] = row.split(",");
+        return {
+          sanction: sanction?.trim(),
+          type: type?.trim(),
+          offense: offense?.trim(),
+          severity: severity?.trim(),
+        };
+      });
+
+      const updated = [...sanctions, ...newSanctions];
+      setSanctions(updated);
+      setFilteredSanctions(updated);
+    };
+    reader.readAsText(file);
   };
 
   // ---- DOWNLOAD TEMPLATE ----
@@ -180,7 +203,18 @@ export default function SanctionPage() {
         />
         <div className="button-group">
           <button className="btn primary" onClick={() => setShowAddModal(true)}>+ Add</button>
-          <button className="btn secondary" onClick={handleBulkUpload}>Bulk Upload</button>
+
+          {/* Bulk Upload with hidden input */}
+          <label className="btn secondary">
+            Bulk Upload
+            <input
+              type="file"
+              accept=".csv"
+              style={{ display: "none" }}
+              onChange={handleBulkUpload}
+            />
+          </label>
+
           <button className="btn secondary" onClick={handleExport}>Export</button>
           <button className="btn secondary" onClick={() => setShowFilterModal(true)}>Filter</button>
         </div>
@@ -222,86 +256,85 @@ export default function SanctionPage() {
       </div>
 
       {/* ---- ADD MODAL ---- */}
-{showAddModal && (
-  <div className="modal-overlay">
-    <div className="custom-modal">
-      <div className="modal-header">Add Sanction</div>
-      <div className="modal-body">
-        <label>Sanction</label>
-        <input
-          type="text"
-          name="sanction"
-          value={formData.sanction}
-          onChange={handleInputChange}
-        />
-        <label>Category</label>
-        <select name="type" value={formData.type} onChange={handleInputChange}>
-          <option value="">Select Category</option>
-          <option value="Minor">Minor</option>
-          <option value="Major">Major</option>
-        </select>
-        <label>Offense Level</label>
-        <select name="offense" value={formData.offense} onChange={handleInputChange}>
-          <option value="">Select Offense</option>
-          <option value="1st">1st</option>
-          <option value="2nd">2nd</option>
-          <option value="3rd">3rd</option>
-        </select>
-        <label>Severity Level</label>
-        <select name="severity" value={formData.severity} onChange={handleInputChange}>
-          <option value="">Select Severity</option>
-          <option value="Low">Low</option>
-          <option value="Moderate">Moderate</option>
-          <option value="High">High</option>
-        </select>
-      </div>
-      <div className="modal-footer">
-        <button className="btn cancel" onClick={() => setShowAddModal(false)}>Cancel</button>
-        <button className="btn confirm" onClick={handleAdd}>Add</button>
-      </div>
-    </div>
-  </div>
-)}
+      {showAddModal && (
+        <div className="modal-overlay">
+          <div className="custom-modal">
+            <div className="modal-header">Add Sanction</div>
+            <div className="modal-body">
+              <label>Sanction</label>
+              <input
+                type="text"
+                name="sanction"
+                value={formData.sanction}
+                onChange={handleInputChange}
+              />
+              <label>Category</label>
+              <select name="type" value={formData.type} onChange={handleInputChange}>
+                <option value="">Select Category</option>
+                <option value="Minor">Minor</option>
+                <option value="Major">Major</option>
+              </select>
+              <label>Offense Level</label>
+              <select name="offense" value={formData.offense} onChange={handleInputChange}>
+                <option value="">Select Offense</option>
+                <option value="1st">1st</option>
+                <option value="2nd">2nd</option>
+                <option value="3rd">3rd</option>
+              </select>
+              <label>Severity Level</label>
+              <select name="severity" value={formData.severity} onChange={handleInputChange}>
+                <option value="">Select Severity</option>
+                <option value="Low">Low</option>
+                <option value="Moderate">Moderate</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div className="modal-footer">
+              <button className="btn cancel" onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button className="btn confirm" onClick={handleAdd}>Add</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-{/* ---- EDIT MODAL ---- */}
-{showEditModal && (
-  <div className="modal-overlay">
-    <div className="custom-modal">
-      <div className="modal-header">Edit Sanction</div>
-      <div className="modal-body">
-        <label>Sanction</label>
-        <input
-          type="text"
-          name="sanction"
-          value={formData.sanction}
-          onChange={handleInputChange}
-        />
-        <label>Category</label>
-        <select name="type" value={formData.type} onChange={handleInputChange}>
-          <option value="Minor">Minor</option>
-          <option value="Major">Major</option>
-        </select>
-        <label>Offense Level</label>
-        <select name="offense" value={formData.offense} onChange={handleInputChange}>
-          <option value="1st">1st</option>
-          <option value="2nd">2nd</option>
-          <option value="3rd">3rd</option>
-        </select>
-        <label>Severity Level</label>
-        <select name="severity" value={formData.severity} onChange={handleInputChange}>
-          <option value="Low">Low</option>
-          <option value="Moderate">Moderate</option>
-          <option value="High">High</option>
-        </select>
-      </div>
-      <div className="modal-footer">
-        <button className="btn cancel" onClick={() => setShowEditModal(false)}>Cancel</button>
-        <button className="btn confirm" onClick={handleEdit}>Save</button>
-      </div>
-    </div>
-  </div>
-)}
-
+      {/* ---- EDIT MODAL ---- */}
+      {showEditModal && (
+        <div className="modal-overlay">
+          <div className="custom-modal">
+            <div className="modal-header">Edit Sanction</div>
+            <div className="modal-body">
+              <label>Sanction</label>
+              <input
+                type="text"
+                name="sanction"
+                value={formData.sanction}
+                onChange={handleInputChange}
+              />
+              <label>Category</label>
+              <select name="type" value={formData.type} onChange={handleInputChange}>
+                <option value="Minor">Minor</option>
+                <option value="Major">Major</option>
+              </select>
+              <label>Offense Level</label>
+              <select name="offense" value={formData.offense} onChange={handleInputChange}>
+                <option value="1st">1st</option>
+                <option value="2nd">2nd</option>
+                <option value="3rd">3rd</option>
+              </select>
+              <label>Severity Level</label>
+              <select name="severity" value={formData.severity} onChange={handleInputChange}>
+                <option value="Low">Low</option>
+                <option value="Moderate">Moderate</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div className="modal-footer">
+              <button className="btn cancel" onClick={() => setShowEditModal(false)}>Cancel</button>
+              <button className="btn confirm" onClick={handleEdit}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ---- FILTER MODAL ---- */}
       {showFilterModal && (

@@ -5,10 +5,9 @@ import { FaEdit, FaTrash, FaUserCircle } from "react-icons/fa";
 
 const initialDepartments = [
   { name: "BSIT", type: "Student" },
-  { name: "BSEd", type: "Student" },
+  { name: "BSED", type: "Student" },
   { name: "BEED", type: "Student" },
   { name: "ABEL", type: "Student" },
-  { name: "ACT", type: "Student" },
   { name: "BSHM", type: "Student" },
   { name: "BSTM", type: "Student" },
   { name: "BSA", type: "Student" },
@@ -121,8 +120,29 @@ export default function DepartmentPage() {
   };
 
   // ---- BULK UPLOAD ----
-  const handleBulkUpload = () => {
-    alert("Bulk Upload feature not yet implemented.");
+  const handleBulkUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const rows = text.split("\n").map((row) => row.trim()).filter(Boolean);
+
+      // Expecting format: Department,Type
+      const newDepts = rows.slice(1).map((row) => {
+        const [name, type] = row.split(",");
+        return {
+          name: name?.trim(),
+          type: type?.trim(),
+        };
+      });
+
+      const updated = [...departments, ...newDepts];
+      setDepartments(updated);
+      setFilteredDepartments(updated);
+    };
+    reader.readAsText(file);
   };
 
   // ---- DOWNLOAD TEMPLATE ----
@@ -176,7 +196,18 @@ export default function DepartmentPage() {
         />
         <div className="button-group">
           <button className="btn primary" onClick={() => setShowAddModal(true)}>+ Add</button>
-          <button className="btn secondary" onClick={handleBulkUpload}>Bulk Upload</button>
+          
+          {/* Bulk Upload */}
+          <label className="btn secondary">
+            Bulk Upload
+            <input
+              type="file"
+              accept=".csv"
+              style={{ display: "none" }}
+              onChange={handleBulkUpload}
+            />
+          </label>
+
           <button className="btn secondary" onClick={handleExport}>Export</button>
           <button className="btn secondary" onClick={() => setShowFilterModal(true)}>Filter</button>
         </div>

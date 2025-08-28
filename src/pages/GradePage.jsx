@@ -115,14 +115,35 @@ export default function GradePage() {
     URL.revokeObjectURL(url);
   };
 
-  // ---- BULK UPLOAD (Simulation) ----
-  const handleBulkUpload = () => {
-    alert("Bulk Upload feature not yet implemented.");
+  // ---- BULK UPLOAD (Real Implementation) ----
+  const handleBulkUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const rows = text.split("\n").map((row) => row.trim()).filter(Boolean);
+
+      // Expecting format: Grade,Type
+      const newGrades = rows.slice(1).map((row) => {
+        const [grade, type] = row.split(",");
+        return {
+          grade: grade?.trim(),
+          type: type?.trim(),
+        };
+      });
+
+      const updated = [...grades, ...newGrades];
+      setGrades(updated);
+      setFilteredGrades(updated);
+    };
+    reader.readAsText(file);
   };
 
   // ---- DOWNLOAD TEMPLATE ----
   const handleDownloadTemplate = () => {
-    const template = "Grade,Type\n";
+    const template = "Grade,Type\nGrade 7,Student\n";
     const blob = new Blob([template], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -171,7 +192,18 @@ export default function GradePage() {
         />
         <div className="button-group">
           <button className="btn primary" onClick={() => setShowAddModal(true)}>+ Add</button>
-          <button className="btn secondary" onClick={handleBulkUpload}>Bulk Upload</button>
+          
+          {/* Bulk Upload with hidden input */}
+          <label className="btn secondary">
+            Bulk Upload
+            <input
+              type="file"
+              accept=".csv"
+              style={{ display: "none" }}
+              onChange={handleBulkUpload}
+            />
+          </label>
+
           <button className="btn secondary" onClick={handleExport}>Export</button>
           <button className="btn secondary" onClick={() => setShowFilterModal(true)}>Filter</button>
         </div>

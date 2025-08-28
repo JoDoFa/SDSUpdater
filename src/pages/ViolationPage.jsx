@@ -120,9 +120,31 @@ export default function ViolationPage() {
     URL.revokeObjectURL(url);
   };
 
-  // ---- BULK UPLOAD (Simulation) ----
-  const handleBulkUpload = () => {
-    alert("Bulk Upload feature not yet implemented.");
+  // ---- BULK UPLOAD ----
+  const handleBulkUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const rows = text.split("\n").map((row) => row.trim()).filter(Boolean);
+
+      // Expecting format: Violation,Category,Severity
+      const newViolations = rows.slice(1).map((row) => {
+        const [violation, type, severity] = row.split(",");
+        return {
+          violation: violation?.trim(),
+          type: type?.trim(),
+          severity: severity?.trim(),
+        };
+      });
+
+      const updated = [...violations, ...newViolations];
+      setViolations(updated);
+      setFilteredViolations(updated);
+    };
+    reader.readAsText(file);
   };
 
   // ---- DOWNLOAD TEMPLATE ----
@@ -176,7 +198,18 @@ export default function ViolationPage() {
         />
         <div className="button-group">
           <button className="btn primary" onClick={() => setShowAddModal(true)}>+ Add</button>
-          <button className="btn secondary" onClick={handleBulkUpload}>Bulk Upload</button>
+          
+          {/* Bulk Upload */}
+          <label className="btn secondary">
+            Bulk Upload
+            <input
+              type="file"
+              accept=".csv"
+              style={{ display: "none" }}
+              onChange={handleBulkUpload}
+            />
+          </label>
+
           <button className="btn secondary" onClick={handleExport}>Export</button>
           <button className="btn secondary" onClick={() => setShowFilterModal(true)}>Filter</button>
         </div>
@@ -216,94 +249,92 @@ export default function ViolationPage() {
       </div>
 
       {/* ---- ADD MODAL ---- */}
-      {/* ---- ADD MODAL ---- */}
-{showAddModal && (
-  <div className="modal-overlay">
-    <div className="modal-box">
-      <div className="modal-header">
-        <h3>Add Violation</h3>
-      </div>
-      <div className="modal-body">
-        <label>Violation</label>
-        <input
-          type="text"
-          name="violation"
-          value={formData.violation}
-          onChange={handleInputChange}
-        />
-        <label>Category</label>
-        <select name="type" value={formData.type} onChange={handleInputChange}>
-          <option value="">Select Category</option>
-          <option value="Minor">Minor</option>
-          <option value="Major">Major</option>
-        </select>
-        <label>Severity Level</label>
-        <select
-          name="severity"
-          value={formData.severity}
-          onChange={handleInputChange}
-        >
-          <option value="">Select Severity</option>
-          <option value="Low">Low</option>
-          <option value="Moderate">Moderate</option>
-          <option value="High">High</option>
-        </select>
-      </div>
-      <div className="modal-footer">
-        <button className="btn cancel" onClick={() => setShowAddModal(false)}>
-          Cancel
-        </button>
-        <button className="btn add" onClick={handleAdd}>
-          Add
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      {showAddModal && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <div className="modal-header">
+              <h3>Add Violation</h3>
+            </div>
+            <div className="modal-body">
+              <label>Violation</label>
+              <input
+                type="text"
+                name="violation"
+                value={formData.violation}
+                onChange={handleInputChange}
+              />
+              <label>Category</label>
+              <select name="type" value={formData.type} onChange={handleInputChange}>
+                <option value="">Select Category</option>
+                <option value="Minor">Minor</option>
+                <option value="Major">Major</option>
+              </select>
+              <label>Severity Level</label>
+              <select
+                name="severity"
+                value={formData.severity}
+                onChange={handleInputChange}
+              >
+                <option value="">Select Severity</option>
+                <option value="Low">Low</option>
+                <option value="Moderate">Moderate</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div className="modal-footer">
+              <button className="btn cancel" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </button>
+              <button className="btn add" onClick={handleAdd}>
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-{/* ---- EDIT MODAL ---- */}
-{showEditModal && (
-  <div className="modal-overlay">
-    <div className="modal-box">
-      <div className="modal-header">
-        <h3>Edit Violation</h3>
-      </div>
-      <div className="modal-body">
-        <label>Violation</label>
-        <input
-          type="text"
-          name="violation"
-          value={formData.violation}
-          onChange={handleInputChange}
-        />
-        <label>Category</label>
-        <select name="type" value={formData.type} onChange={handleInputChange}>
-          <option value="Minor">Minor</option>
-          <option value="Major">Major</option>
-        </select>
-        <label>Severity Level</label>
-        <select
-          name="severity"
-          value={formData.severity}
-          onChange={handleInputChange}
-        >
-          <option value="Low">Low</option>
-          <option value="Moderate">Moderate</option>
-          <option value="High">High</option>
-        </select>
-      </div>
-      <div className="modal-footer">
-        <button className="btn cancel" onClick={() => setShowEditModal(false)}>
-          Cancel
-        </button>
-        <button className="btn add" onClick={handleEdit}>
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+      {/* ---- EDIT MODAL ---- */}
+      {showEditModal && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <div className="modal-header">
+              <h3>Edit Violation</h3>
+            </div>
+            <div className="modal-body">
+              <label>Violation</label>
+              <input
+                type="text"
+                name="violation"
+                value={formData.violation}
+                onChange={handleInputChange}
+              />
+              <label>Category</label>
+              <select name="type" value={formData.type} onChange={handleInputChange}>
+                <option value="Minor">Minor</option>
+                <option value="Major">Major</option>
+              </select>
+              <label>Severity Level</label>
+              <select
+                name="severity"
+                value={formData.severity}
+                onChange={handleInputChange}
+              >
+                <option value="Low">Low</option>
+                <option value="Moderate">Moderate</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div className="modal-footer">
+              <button className="btn cancel" onClick={() => setShowEditModal(false)}>
+                Cancel
+              </button>
+              <button className="btn add" onClick={handleEdit}>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ---- FILTER MODAL ---- */}
       {showFilterModal && (
@@ -348,7 +379,6 @@ export default function ViolationPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

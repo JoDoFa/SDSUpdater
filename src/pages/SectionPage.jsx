@@ -112,9 +112,30 @@ export default function SectionPage() {
     URL.revokeObjectURL(url);
   };
 
-  // ---- BULK UPLOAD (Simulation) ----
-  const handleBulkUpload = () => {
-    alert("Bulk Upload feature not yet implemented.");
+  // ---- BULK UPLOAD ----
+  const handleBulkUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const rows = text.split("\n").map((row) => row.trim()).filter(Boolean);
+
+      // Expecting format: Section,Type
+      const newSections = rows.slice(1).map((row) => {
+        const [section, type] = row.split(",");
+        return {
+          section: section?.trim(),
+          type: type?.trim(),
+        };
+      });
+
+      const updated = [...sections, ...newSections];
+      setSections(updated);
+      setFilteredSections(updated);
+    };
+    reader.readAsText(file);
   };
 
   // ---- DOWNLOAD TEMPLATE ----
@@ -168,7 +189,18 @@ export default function SectionPage() {
         />
         <div className="button-group">
           <button className="btn primary" onClick={() => setShowAddModal(true)}>+ Add</button>
-          <button className="btn secondary" onClick={handleBulkUpload}>Bulk Upload</button>
+          
+          {/* Bulk Upload with hidden file input */}
+          <label className="btn secondary">
+            Bulk Upload
+            <input
+              type="file"
+              accept=".csv"
+              style={{ display: "none" }}
+              onChange={handleBulkUpload}
+            />
+          </label>
+
           <button className="btn secondary" onClick={handleExport}>Export</button>
           <button className="btn secondary" onClick={() => setShowFilterModal(true)}>Filter</button>
         </div>
