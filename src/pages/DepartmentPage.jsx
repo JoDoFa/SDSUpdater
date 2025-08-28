@@ -3,18 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "./DepartmentPage.css";
 import { FaEdit, FaTrash, FaUserCircle } from "react-icons/fa";
 
-const initialDepartments = [
-  { name: "BSIT", type: "Student" },
-  { name: "BSED", type: "Student" },
-  { name: "BEED", type: "Student" },
-  { name: "ABEL", type: "Student" },
-  { name: "BSHM", type: "Student" },
-  { name: "BSTM", type: "Student" },
-  { name: "BSA", type: "Student" },
-  { name: "BSMA", type: "Student" },
-  { name: "BSCE", type: "Student" },
-  { name: "OSA", type: "Admin" },
-];
+const initialDepartments = [];
 
 export default function DepartmentPage() {
   const [departments, setDepartments] = useState(initialDepartments);
@@ -25,7 +14,7 @@ export default function DepartmentPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const [formData, setFormData] = useState({ name: "", type: "" });
+  const [formData, setFormData] = useState({ id: "", name: "", type: "" });
   const [editIndex, setEditIndex] = useState(null);
 
   // filter states
@@ -34,6 +23,21 @@ export default function DepartmentPage() {
 
   const filterRef = useRef(null);
 
+  // ---- FETCH FROM BACKEND ----
+  useEffect(() => {
+    fetch("http://localhost/SDSUpdatededs-main/backend/department.php")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setDepartments(data);
+          setFilteredDepartments(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching departments:", err);
+      });
+  }, []);
+
   // ---- INPUT HANDLER ----
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,21 +45,48 @@ export default function DepartmentPage() {
 
   // ---- ADD ----
   const handleAdd = () => {
-    const updated = [...departments, formData];
-    setDepartments(updated);
-    setFilteredDepartments(updated);
-    setFormData({ name: "", type: "" });
-    setShowAddModal(false);
+    fetch("http://localhost/SDSUpdatededs-main/backend/department.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...formData, action: "add" }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          const newDept = { id: data.id, name: formData.name, type: formData.type };
+          const updated = [...departments, newDept];
+          setDepartments(updated);
+          setFilteredDepartments(updated);
+          setFormData({ id: "", name: "", type: "" });
+          setShowAddModal(false);
+        } else {
+          alert("Error: " + data.message);
+        }
+      })
+      .catch((err) => console.error("Error saving department:", err));
   };
 
   // ---- EDIT ----
   const handleEdit = () => {
-    const updated = [...departments];
-    updated[editIndex] = formData;
-    setDepartments(updated);
-    setFilteredDepartments(updated);
-    setFormData({ name: "", type: "" });
-    setShowEditModal(false);
+    fetch("http://localhost/SDSUpdatededs-main/backend/department.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...formData, action: "update" }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          const updated = [...departments];
+          updated[editIndex] = formData;
+          setDepartments(updated);
+          setFilteredDepartments(updated);
+          setFormData({ id: "", name: "", type: "" });
+          setShowEditModal(false);
+        } else {
+          alert("Error: " + data.message);
+        }
+      })
+      .catch((err) => console.error("Error updating department:", err));
   };
 
   const openEditModal = (index) => {
@@ -67,9 +98,24 @@ export default function DepartmentPage() {
   // ---- DELETE ----
   const handleDelete = (index) => {
     if (window.confirm("Are you sure you want to delete this department?")) {
-      const updated = departments.filter((_, i) => i !== index);
-      setDepartments(updated);
-      setFilteredDepartments(updated);
+      const deletedDept = departments[index];
+
+      fetch("http://localhost/SDSUpdatededs-main/backend/department.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deletedDept.id, action: "delete" }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            const updated = departments.filter((_, i) => i !== index);
+            setDepartments(updated);
+            setFilteredDepartments(updated);
+          } else {
+            alert("Error: " + data.message);
+          }
+        })
+        .catch((err) => console.error("Error deleting department:", err));
     }
   };
 
@@ -129,18 +175,32 @@ export default function DepartmentPage() {
       const text = e.target.result;
       const rows = text.split("\n").map((row) => row.trim()).filter(Boolean);
 
-      // Expecting format: Department,Type
       const newDepts = rows.slice(1).map((row) => {
         const [name, type] = row.split(",");
-        return {
-          name: name?.trim(),
-          type: type?.trim(),
-        };
+        return { name: name?.trim(), type: type?.trim() };
       });
 
-      const updated = [...departments, ...newDepts];
-      setDepartments(updated);
-      setFilteredDepartments(updated);
+      // Bulk insert one by one
+      Promise.all(
+        newDepts.map((dept) =>
+          fetch("http://localhost/SDSUpdatededs-main/backend/department.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...dept, action: "add" }),
+          }).then((res) => res.json())
+        )
+      )
+        .then((results) => {
+          const successful = results.filter((r) => r.success);
+          if (successful.length > 0) {
+            const updated = [...departments, ...newDepts];
+            setDepartments(updated);
+            setFilteredDepartments(updated);
+          } else {
+            alert("Error: Failed bulk upload");
+          }
+        })
+        .catch((err) => console.error("Error bulk uploading:", err));
     };
     reader.readAsText(file);
   };
@@ -197,7 +257,6 @@ export default function DepartmentPage() {
         <div className="button-group">
           <button className="btn primary" onClick={() => setShowAddModal(true)}>+ Add</button>
           
-          {/* Bulk Upload */}
           <label className="btn secondary">
             Bulk Upload
             <input
