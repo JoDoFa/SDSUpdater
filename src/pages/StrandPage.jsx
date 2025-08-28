@@ -1,13 +1,9 @@
+// src/pages/StrandPage.jsx
 import React, { useState, useRef, useEffect } from "react";
 import "./StrandPage.css";
 import { FaEdit, FaTrash, FaUserCircle } from "react-icons/fa";
 
-const initialStrands = [
-  { strand: "STEM", type: "Academic" },
-  { strand: "ABM", type: "Academic" },
-  { strand: "HUMSS", type: "Academic" },
-  { strand: "GAS", type: "Academic" },
-];
+const initialStrands = [];
 
 export default function StrandPage() {
   const [strands, setStrands] = useState(initialStrands);
@@ -18,37 +14,79 @@ export default function StrandPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const [formData, setFormData] = useState({ strand: "", type: "" });
+  const [formData, setFormData] = useState({ id: "", strand_name: "", type: "" });
   const [editIndex, setEditIndex] = useState(null);
 
-  // filter modal states
+  // filter states
   const [alphabetical, setAlphabetical] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
 
   const filterRef = useRef(null);
 
-  // ---- HANDLE INPUT ----
+  // ---- FETCH FROM BACKEND ----
+  useEffect(() => {
+    fetch("http://localhost/SDSUpdatededs-main/backend/strand.php")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setStrands(data);
+          setFilteredStrands(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching strands:", err);
+      });
+  }, []);
+
+  // ---- INPUT HANDLER ----
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   // ---- ADD ----
   const handleAdd = () => {
-    const updated = [...strands, formData];
-    setStrands(updated);
-    setFilteredStrands(updated);
-    setFormData({ strand: "", type: "" });
-    setShowAddModal(false);
+    fetch("http://localhost/SDSUpdatededs-main/backend/strand.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...formData, action: "add" }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          const newStrand = { id: data.id, strand_name: formData.strand_name, type: formData.type };
+          const updated = [...strands, newStrand];
+          setStrands(updated);
+          setFilteredStrands(updated);
+          setFormData({ id: "", strand_name: "", type: "" });
+          setShowAddModal(false);
+        } else {
+          alert("Error: " + data.message);
+        }
+      })
+      .catch((err) => console.error("Error saving strand:", err));
   };
 
   // ---- EDIT ----
   const handleEdit = () => {
-    const updated = [...strands];
-    updated[editIndex] = formData;
-    setStrands(updated);
-    setFilteredStrands(updated);
-    setFormData({ strand: "", type: "" });
-    setShowEditModal(false);
+    fetch("http://localhost/SDSUpdatededs-main/backend/strand.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...formData, action: "update" }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          const updated = [...strands];
+          updated[editIndex] = formData;
+          setStrands(updated);
+          setFilteredStrands(updated);
+          setFormData({ id: "", strand_name: "", type: "" });
+          setShowEditModal(false);
+        } else {
+          alert("Error: " + data.message);
+        }
+      })
+      .catch((err) => console.error("Error updating strand:", err));
   };
 
   const openEditModal = (index) => {
@@ -60,9 +98,24 @@ export default function StrandPage() {
   // ---- DELETE ----
   const handleDelete = (index) => {
     if (window.confirm("Are you sure you want to delete this strand?")) {
-      const updated = strands.filter((_, i) => i !== index);
-      setStrands(updated);
-      setFilteredStrands(updated);
+      const deletedStrand = strands[index];
+
+      fetch("http://localhost/SDSUpdatededs-main/backend/strand.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deletedStrand.id, action: "delete" }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            const updated = strands.filter((_, i) => i !== index);
+            setStrands(updated);
+            setFilteredStrands(updated);
+          } else {
+            alert("Error: " + data.message);
+          }
+        })
+        .catch((err) => console.error("Error deleting strand:", err));
     }
   };
 
@@ -71,7 +124,7 @@ export default function StrandPage() {
     const value = e.target.value.toLowerCase();
     setSearch(value);
     const filtered = strands.filter((s) =>
-      s.strand.toLowerCase().includes(value)
+      s.strand_name.toLowerCase().includes(value)
     );
     setFilteredStrands(filtered);
   };
@@ -81,9 +134,9 @@ export default function StrandPage() {
     let result = [...strands];
 
     if (alphabetical === "az") {
-      result.sort((a, b) => a.strand.localeCompare(b.strand));
+      result.sort((a, b) => a.strand_name.localeCompare(b.strand_name));
     } else if (alphabetical === "za") {
-      result.sort((a, b) => b.strand.localeCompare(a.strand));
+      result.sort((a, b) => b.strand_name.localeCompare(a.strand_name));
     }
 
     if (typeFilter) {
@@ -98,7 +151,7 @@ export default function StrandPage() {
   const handleExport = () => {
     const csv = [
       ["Strand", "Type"],
-      ...strands.map((s) => [s.strand, s.type]),
+      ...strands.map((s) => [s.strand_name, s.type]),
     ]
       .map((row) => row.join(","))
       .join("\n");
@@ -122,18 +175,32 @@ export default function StrandPage() {
       const text = e.target.result;
       const rows = text.split("\n").map((row) => row.trim()).filter(Boolean);
 
-      // Expecting format: Strand,Type
       const newStrands = rows.slice(1).map((row) => {
-        const [strand, type] = row.split(",");
-        return {
-          strand: strand?.trim(),
-          type: type?.trim(),
-        };
+        const [strand_name, type] = row.split(",");
+        return { strand_name: strand_name?.trim(), type: type?.trim() };
       });
 
-      const updated = [...strands, ...newStrands];
-      setStrands(updated);
-      setFilteredStrands(updated);
+      // Bulk insert one by one
+      Promise.all(
+        newStrands.map((strand) =>
+          fetch("http://localhost/SDSUpdatededs-main/backend/strand.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...strand, action: "add" }),
+          }).then((res) => res.json())
+        )
+      )
+        .then((results) => {
+          const successful = results.filter((r) => r.success);
+          if (successful.length > 0) {
+            const updated = [...strands, ...newStrands];
+            setStrands(updated);
+            setFilteredStrands(updated);
+          } else {
+            alert("Error: Failed bulk upload");
+          }
+        })
+        .catch((err) => console.error("Error bulk uploading:", err));
     };
     reader.readAsText(file);
   };
@@ -189,8 +256,6 @@ export default function StrandPage() {
         />
         <div className="button-group">
           <button className="btn primary" onClick={() => setShowAddModal(true)}>+ Add</button>
-
-          {/* Bulk Upload with hidden input */}
           <label className="btn secondary">
             Bulk Upload
             <input
@@ -200,7 +265,6 @@ export default function StrandPage() {
               onChange={handleBulkUpload}
             />
           </label>
-
           <button className="btn secondary" onClick={handleExport}>Export</button>
           <button className="btn secondary" onClick={() => setShowFilterModal(true)}>Filter</button>
         </div>
@@ -219,7 +283,7 @@ export default function StrandPage() {
           <tbody>
             {filteredStrands.map((s, i) => (
               <tr key={i}>
-                <td>{s.strand}</td>
+                <td>{s.strand_name}</td>
                 <td>{s.type}</td>
                 <td>
                   <FaEdit className="icon edit-icon" onClick={() => openEditModal(i)} />
@@ -248,8 +312,8 @@ export default function StrandPage() {
               <label>Strand</label>
               <input
                 type="text"
-                name="strand"
-                value={formData.strand}
+                name="strand_name"
+                value={formData.strand_name}
                 onChange={handleInputChange}
                 placeholder="Enter Strand"
               />
@@ -281,8 +345,8 @@ export default function StrandPage() {
               <label>Strand</label>
               <input
                 type="text"
-                name="strand"
-                value={formData.strand}
+                name="strand_name"
+                value={formData.strand_name}
                 onChange={handleInputChange}
                 placeholder="Enter Strand"
               />
@@ -338,7 +402,6 @@ export default function StrandPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
